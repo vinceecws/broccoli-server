@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import os
 from util.data_util import *
 from .server import Server
 
@@ -17,6 +18,9 @@ class DataServer(Server):
             encoding=encoding)
 
         self.data_dir = data_dir
+
+        os.makedirs(os.path.dirname(self.data_dir), exist_ok=True) # Recursively create directory if it does not exist yet
+
         self.init_header()
 
     def init_header(self):

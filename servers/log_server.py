@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import os
 from datetime import datetime
 from util.data_util import *
 from .server import Server
@@ -18,6 +19,8 @@ class LogServer(Server):
             encoding=encoding)
 
         self.log_data_dir = log_data_dir
+        
+        os.makedirs(os.path.dirname(self.log_data_dir), exist_ok=True) # Recursively create directory if it does not exist yet
 
     def receive_data(self, data):
 

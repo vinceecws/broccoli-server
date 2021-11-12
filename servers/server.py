@@ -23,8 +23,6 @@ class Server:
 
         self.server_proc = None
 
-        signal.signal(signal.SIGCHLD, self._forget_child_proc)
-
     def _close_main_sock(self):
 
         if self.sock is not None:
@@ -49,24 +47,26 @@ class Server:
 
             while True:
                 try:
-                    ready_to_read, _, _ = select.select([conn,], [conn,], [], 5)
+                    ready_to_read, _, _ = select.select([conn,], [], [], self.timeout)
 
-                    if len(ready_to_read) > 0:
-                        data = conn.recv(4096) # Receive
+                    if len(ready_to_read) <= 0: # Timeout occured
+                        break
 
-                        if not data:
-                            break
+                    data = conn.recv(4096) # Receive
 
-                        logging.info(f"Received data: {data}")
-                        data = self.decode_data(data).rstrip()
-                        logging.debug(f"Decoded data: {data}")
+                    if not data: # Empty data stream. Connection terminated.
+                        break
 
-                        response = self.receive_data(data)
+                    logging.info(f"Received data: {data}")
+                    data = self.decode_data(data).rstrip()
+                    logging.debug(f"Decoded data: {data}")
 
-                        logging.debug(f"Response code: {response}")
-                        response = self.encode_data(response)
-                        logging.debug(f"Encoded response: {response}")
-                        conn.sendall(response) # Respond
+                    response = self.receive_data(data)
+
+                    logging.debug(f"Response code: {response}")
+                    response = self.encode_data(response)
+                    logging.debug(f"Encoded response: {response}")
+                    conn.sendall(response) # Respond
 
                 except UnicodeDecodeError as e: # Catches decoding error
                     logging.error(f"{e}")
@@ -115,7 +115,6 @@ class Server:
 
                     logging.info("Listening for new connections...")
                     conn, addr = self.sock.accept()
-                    conn.settimeout(self.timeout)
 
                     threading.Thread(target=self._start_conn_thread, args=(self._next_available_idx(), conn, addr[0], addr[1],)).start()
 
@@ -138,6 +137,11 @@ class Server:
                 os.kill(self.server_proc.pid, signal.SIGUSR1)
             else:
                 self.server_proc.terminate()
+
+            self.server_proc.join()
+            self.server_proc.close()
+            print(f"{self.server_name} process joined and closed.")
+            self.server_proc = None
 
     def _kill_server(self, sig, frame):
 
@@ -168,13 +172,9 @@ class Server:
             logging.info("Active connection(s) found. Server will terminate after connection(s) timeout or task completion")
             self.kill = True
 
-    def _forget_child_proc(self, sig, frame):
-
-        if sig == signal.SIGCHLD and self.is_running():
-            self.server_proc.close()
-            self.server_proc = None
-
     def init_logger(self, log_console=False):
+
+        os.makedirs(os.path.dirname(self.logs_path), exist_ok=True) # Recursively create directory if it does not exist yet
 
         logFormatter = logging.Formatter('%(asctime)s -> [%(name)s] %(levelname)s : %(message)s')
         rootLogger = logging.getLogger()

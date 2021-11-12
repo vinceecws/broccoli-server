@@ -3,6 +3,7 @@
 import signal
 import os
 import logging
+import time
 from argparse import ArgumentParser
 from config import *
 from servers import DataServer, LogServer, TimeServer
@@ -10,26 +11,16 @@ from servers import DataServer, LogServer, TimeServer
 data_server = None
 log_server = None
 time_server = None
-terminate = False
 
 def signal_handler(sig, frame):
     global data_server
     global log_server
     global time_server
-    global terminate
-    
-    if terminate:
-        print("Terminating immediately")
-        data_server.stop(kill=True)
-        log_server.stop(kill=True)
-        time_server.stop(kill=True)
 
-    else:
-        print("Terminating after task completion")
-        data_server.stop(kill=False)
-        log_server.stop(kill=False)
-        time_server.stop(kill=False)
-        terminate = True
+    data_server.stop(kill=False)
+    log_server.stop(kill=False)
+    time_server.stop(kill=False)
+
 
 if __name__ == "__main__":
 
@@ -78,6 +69,8 @@ if __name__ == "__main__":
     data_server.start(HOST, DATA_SERVER_PORT)
     log_server.start(HOST, LOG_SERVER_PORT)
     time_server.start(HOST, TIME_SERVER_PORT)
+
+    print("All servers started")
 
     signal.signal(signal.SIGINT, signal_handler)
 
