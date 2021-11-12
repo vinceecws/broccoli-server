@@ -4,6 +4,7 @@ import signal
 import os
 import logging
 import time
+import threading
 from argparse import ArgumentParser
 from config import *
 from servers import DataServer, LogServer, TimeServer
@@ -11,15 +12,21 @@ from servers import DataServer, LogServer, TimeServer
 data_server = None
 log_server = None
 time_server = None
+terminate = False
 
 def signal_handler(sig, frame):
     global data_server
     global log_server
     global time_server
+    global terminate
 
-    data_server.stop(kill=False)
-    log_server.stop(kill=False)
-    time_server.stop(kill=False)
+    data_server.stop(kill=terminate)
+    log_server.stop(kill=terminate)
+    time_server.stop(kill=terminate)
+
+    if not terminate:
+        print("Terminating after task completion")
+        terminate = True
 
 
 if __name__ == "__main__":
@@ -75,4 +82,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     while any([data_server.is_running(), log_server.is_running(), time_server.is_running()]):
-        signal.pause()
+        time.sleep(0.5)

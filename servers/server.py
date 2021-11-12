@@ -125,6 +125,7 @@ class Server:
     def start(self, host, port):
 
         if not self.is_running():
+            self._is_stopping = False
             self.server_proc = multiprocessing.Process(target=self._run_server, args=(host, port,))
             self.server_proc.daemon = True
             self.server_proc.start()
@@ -135,13 +136,21 @@ class Server:
 
             if kill:
                 os.kill(self.server_proc.pid, signal.SIGUSR1)
+
             else:
                 self.server_proc.terminate()
 
-            self.server_proc.join()
-            self.server_proc.close()
-            print(f"{self.server_name} process joined and closed.")
-            self.server_proc = None
+            if not self._is_stopping:
+                threading.Thread(target=self._join_without_blocking).start()
+                self._is_stopping = True
+
+    def _join_without_blocking(self):
+
+        self.server_proc.join()
+        self.server_proc.close()
+        print(f"{self.server_name} process joined and closed.")
+        self.server_proc = None
+        self.is_stopping = False
 
     def _kill_server(self, sig, frame):
 
@@ -201,7 +210,13 @@ class Server:
             return -1
 
     def is_running(self):
-        return self.server_proc is not None and self.server_proc.is_alive()
+        if self.server_proc is not None:
+            try:
+                return self.server_proc.is_alive()
+            except ValueError: # Server process is already closed
+                return False
+
+        return False
 
     def receive_data(self, data):
         return data

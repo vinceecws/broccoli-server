@@ -3,17 +3,23 @@
 import signal
 import os
 import logging
+import time
 from argparse import ArgumentParser
 from config import *
 from servers import TimeServer
 
 time_server = None
+terminate = False
 
 def signal_handler(sig, frame):
     global time_server
-    
-    print("Terminating after task completion")
-    time_server.stop(kill=False)
+    global terminate
+
+    time_server.stop(kill=terminate)
+
+    if not terminate:
+        print("Terminating after task completion")
+        terminate = True
 
 
 if __name__ == "__main__":
@@ -45,4 +51,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     while time_server.is_running():
-        signal.pause()
+        time.sleep(0.5)
