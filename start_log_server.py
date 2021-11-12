@@ -15,9 +15,11 @@ def signal_handler(sig, frame):
     global terminate
     
     if terminate:
+        print("Terminating immediately")
         log_server.stop(kill=True)
 
     else:
+        print("Terminating after task completion")
         log_server.stop(kill=False)
         terminate = True
 
@@ -25,6 +27,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--log-console", action="store_true")
     parser.add_argument("--max-conn", default=10, type=int)
     args = parser.parse_args()
 
@@ -35,7 +38,16 @@ if __name__ == "__main__":
         print("Starting log server in NORMAL mode")
         logging_level = logging.INFO
 
-    log_server = LogServer(LOG_DATA_DIR, LOG_SERVER_SOCKET_TIMEOUT, "log_server", max_conn=args.max_conn, logs_dir=LOGS_DIR, logging_level=logging_level, encoding=ENCODING)
+    log_server = LogServer(
+        LOG_DATA_DIR, 
+        LOG_SERVER_SOCKET_TIMEOUT, 
+        "log_server", 
+        max_conn=args.max_conn, 
+        logs_dir=LOGS_DIR, 
+        logging_level=logging_level, 
+        log_console=args.log_console,
+        encoding=ENCODING)
+
     log_server.start(HOST, LOG_SERVER_PORT)
 
     signal.signal(signal.SIGINT, signal_handler)

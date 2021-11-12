@@ -12,11 +12,13 @@ import time
 
 class Server:
 
-    def __init__(self, timeout, server_name, max_conn=10, logs_dir="logs/", logging_level=logging.INFO, encoding="utf-8"):
+    def __init__(self, timeout, server_name, max_conn=10, logs_dir="logs/", logging_level=logging.INFO, log_console=False, encoding="utf-8"):
         self.timeout = timeout
+        self.server_name = server_name
         self.max_conn = max_conn
         self.logs_path = os.path.join(logs_dir, server_name + ".log")
         self.logging_level = logging_level
+        self.log_console = log_console
         self.encoding = encoding
 
         self.server_proc = None
@@ -78,7 +80,6 @@ class Server:
 
             logging.info(f"Terminating connection with {host}:{port}")
             logging.info(f"Connection ended with: {host}:{port}")
-            print()
 
         self.conn[idx] = None
         self._conn_count -= 1
@@ -91,7 +92,7 @@ class Server:
         signal.signal(signal.SIGTERM, self._kill_server)
         signal.signal(signal.SIGUSR1, self._kill_server)
 
-        self.init_logger()
+        self.init_logger(log_console=self.log_console)
 
         self.kill = False
         self.conn = [None] * self.max_conn
@@ -169,11 +170,11 @@ class Server:
 
     def _forget_child_proc(self, sig, frame):
 
-        if sig == signal.SIGCHLD:
+        if sig == signal.SIGCHLD and self.is_running():
             self.server_proc.close()
             self.server_proc = None
 
-    def init_logger(self):
+    def init_logger(self, log_console=False):
 
         logFormatter = logging.Formatter('%(asctime)s -> [%(name)s] %(levelname)s : %(message)s')
         rootLogger = logging.getLogger()
@@ -183,9 +184,10 @@ class Server:
         fileHandler.setFormatter(logFormatter)
         rootLogger.addHandler(fileHandler)
 
-        consoleHandler = logging.StreamHandler(sys.stdout)
-        consoleHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(consoleHandler)
+        if log_console:
+            consoleHandler = logging.StreamHandler(sys.stdout)
+            consoleHandler.setFormatter(logFormatter)
+            rootLogger.addHandler(consoleHandler)
 
     def _is_conn_active(self):
         # Checks if there is at least one element in self.conn is not None
