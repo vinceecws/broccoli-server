@@ -7,8 +7,15 @@ from .server import Server
 
 class LogServer(Server):
 
-    def __init__(self, log_data_dir, timeout, server_name, max_conn=10, logs_dir="logs/", logging_level=logging.INFO, encoding="utf-8"):
-        super().__init__(timeout, server_name, max_conn, logs_dir, logging_level, encoding)
+    def __init__(self, log_data_dir, timeout, server_name, max_conn=10, logs_dir="logs/", logging_level=logging.INFO, log_console=False, encoding="utf-8"):
+        super().__init__(
+            timeout, 
+            server_name, 
+            max_conn=max_conn, 
+            logs_dir=logs_dir, 
+            logging_level=logging_level, 
+            log_console=log_console, 
+            encoding=encoding)
 
         self.log_data_dir = log_data_dir
 
