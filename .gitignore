@@ -36,7 +36,7 @@ Temporary Items
 __pycache__/
 *.py[cod]
 *$py.class
-__init__.pyc/
+__init__.pyc
 
 # C extensions
 *.so
@@ -176,5 +176,5 @@ cython_debug/
 
 
 # Application
-logs/*
-data/*
+logs/
+data/

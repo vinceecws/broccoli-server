@@ -8,20 +8,13 @@ from config import *
 from servers import DataServer
 
 data_server = None
-terminate = False
 
 def signal_handler(sig, frame):
     global data_server
-    global terminate
     
-    if terminate:
-        print("Terminating immediately")
-        data_server.stop(kill=True)
+    print("Terminating after task completion")
+    data_server.stop(kill=False)
 
-    else:
-        print("Terminating after task completion")
-        data_server.stop(kill=False)
-        terminate = True
 
 if __name__ == "__main__":
 

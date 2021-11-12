@@ -8,20 +8,13 @@ from config import *
 from servers import TimeServer
 
 time_server = None
-terminate = False
 
 def signal_handler(sig, frame):
     global time_server
-    global terminate
     
-    if terminate:
-        print("Terminating immediately")
-        time_server.stop(kill=True)
+    print("Terminating after task completion")
+    time_server.stop(kill=False)
 
-    else:
-        print("Terminating after task completion")
-        time_server.stop(kill=False)
-        terminate = True
 
 if __name__ == "__main__":
 
